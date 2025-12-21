@@ -44,6 +44,28 @@ This phase introduces **read-only project initialization**.
   - a human-readable message
   - optional underlying exception context (not shown to user by default)
 
+### Error Codes (Authoritative)
+
+The following error codes are stable and must be used:
+
+- `manifest_missing`  
+  `.cairn/manifest.yaml` does not exist at the resolved project root.
+
+- `manifest_not_file`  
+  The manifest path exists but is not a regular file.
+
+- `manifest_invalid_yaml`  
+  The manifest file could not be parsed as valid YAML.
+
+- `manifest_schema_unsupported`  
+  `schema_version` is present but not supported by this version of Cairn.
+
+- `manifest_missing_field`  
+  One or more required manifest fields are missing.
+
+- `manifest_invalid_field`  
+  A required field exists but has an invalid type or value.
+
 ### Notes
 - This function is read-only (no filesystem writes).
 - Manifest path resolution is always `root/.cairn/manifest.yaml`.
@@ -58,4 +80,3 @@ This phase introduces **read-only project initialization**.
 
 ## Open Questions
 (None — must be resolved before implementation)
-
