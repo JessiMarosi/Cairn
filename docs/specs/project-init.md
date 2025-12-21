@@ -27,7 +27,7 @@ Project root contains:
   - `audit.log` (append-only event log; v0 minimal)
   - `locks/` (reserved)
 - `README.md` (human-facing)
-- `data/` (user data; not tool-owned)
+- `data/` (user data; not tool-owned; created empty by default)
 - `plugins/` (reserved; no execution in v0)
 
 ## File Formats
@@ -92,5 +92,4 @@ If any write fails:
 - File permissions: inherit OS defaults (tightening later)
 
 ## Open Questions
-- Should `data/` exist by default?
 - Should we support a `cairn.yaml` at root instead of `.cairn/manifest.yaml`?
