@@ -92,4 +92,5 @@ If any write fails:
 - File permissions: inherit OS defaults (tightening later)
 
 ## Open Questions
-- Should we support a `cairn.yaml` at root instead of `.cairn/manifest.yaml`?
+None (v0).
+
