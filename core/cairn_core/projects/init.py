@@ -6,8 +6,15 @@ new Cairn projects. No side effects are permitted at
 import time.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
+import uuid
+
+import yaml
 
 
 def _validate_project_name(name: str) -> None:
@@ -53,6 +60,16 @@ def _validate_project_name(name: str) -> None:
         )
 
 
+def _utc_now_iso8601() -> str:
+    """Return current UTC time as ISO-8601 string with 'Z' and no microseconds."""
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
+
+
 @dataclass(frozen=True)
 class ProjectContext:
     """
@@ -60,6 +77,7 @@ class ProjectContext:
 
     This object represents validated, on-disk state.
     """
+
     root: Path
     name: str
     schema_version: str
@@ -75,8 +93,7 @@ def init_project(
     """
     Initialize a new Cairn project at the given path.
 
-    This function is intentionally unimplemented.
-    It defines the contract only.
+    Phase 2: creates `.cairn/` and writes `.cairn/manifest.yaml`.
     """
     # Resolve the path but do not create anything
     project_root = path.expanduser().resolve()
@@ -103,3 +120,35 @@ def init_project(
         raise ValueError(f"Project root is not empty: {project_root}")
     except StopIteration:
         pass  # directory is empty
+
+    # Phase 2 filesystem writes
+    cairn_dir = project_root / ".cairn"
+    cairn_dir.mkdir(parents=True, exist_ok=False)
+
+    manifest: dict[str, Any] = {
+        "schema_version": "0.1",
+        "project_id": str(uuid.uuid4()),
+        "name": name,
+        "created_at": _utc_now_iso8601(),
+        "created_by": None,
+        "tool": {
+            "name": "cairn",
+            "version": "0.0.0-dev",
+        },
+    }
+
+    manifest_yaml = yaml.safe_dump(
+        manifest,
+        sort_keys=False,
+        default_flow_style=False,
+        indent=2,
+    )
+
+    (cairn_dir / "manifest.yaml").write_text(manifest_yaml, encoding="utf-8")
+
+    return ProjectContext(
+        root=project_root,
+        name=name,
+        schema_version=manifest["schema_version"],
+        created_at=manifest["created_at"],
+    )

@@ -54,6 +54,23 @@ def test_init_project_rejects_non_empty_directory(tmp_path: Path) -> None:
 def test_init_project_rejects_existing_manifest(tmp_path: Path) -> None:
     cairn_dir = tmp_path / ".cairn"
     cairn_dir.mkdir()
-    (cairn_dir / "manifest.yaml").write_text("schema_version: '0.1.0'\n", encoding="utf-8")
+    (cairn_dir / "manifest.yaml").write_text(
+        "schema_version: '0.1.0'\n", encoding="utf-8"
+    )
+
     with pytest.raises(ValueError, match="manifest exists"):
         init_project(tmp_path, "Cairn")
+
+
+def test_init_project_writes_manifest_when_valid(tmp_path: Path) -> None:
+    # Arrange: empty directory + valid name
+    project_root = tmp_path
+    project_name = "My Project"
+
+    # Act
+    init_project(project_root, project_name)
+
+    # Assert: manifest exists
+    manifest_path = project_root / ".cairn" / "manifest.yaml"
+    assert manifest_path.exists()
+    assert manifest_path.is_file()
