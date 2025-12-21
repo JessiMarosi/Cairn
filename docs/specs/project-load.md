@@ -26,6 +26,28 @@ This phase introduces **read-only project initialization**.
 ## Canonical Paths
 - Manifest: `.cairn/manifest.yaml`
 
+## Public API (Phase 3)
+
+### Function
+`load_project(root: Path) -> ProjectContext`
+
+### Input
+- `root` is an absolute or relative path to the **project root directory**.
+
+### Output
+- Returns a valid `ProjectContext` when `.cairn/manifest.yaml` exists and is valid.
+
+### Error Model
+- Raises `ProjectLoadError` (new) for all load-time failures.
+- `ProjectLoadError` must include:
+  - a stable error code string (e.g., `"manifest_missing"`)
+  - a human-readable message
+  - optional underlying exception context (not shown to user by default)
+
+### Notes
+- This function is read-only (no filesystem writes).
+- Manifest path resolution is always `root/.cairn/manifest.yaml`.
+
 ## Required Behaviors (High-Level)
 - Fail if manifest does not exist
 - Fail if manifest is not valid YAML
