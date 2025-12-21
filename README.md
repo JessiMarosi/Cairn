@@ -12,3 +12,6 @@ Cairn is in early development. Interfaces, schemas, and security boundaries are 
 - No required cloud accounts
 - Explicit, on-disk projects
 - Security and auditability are core features, not add-ons
+
+Cairn is an open project stewarded by its maintainers.  
+The name and direction of the project are guided by its design principles and security goals.
