@@ -70,8 +70,8 @@ Contains:
 
 ## Validation / Preconditions
 - `project_root` must exist OR be creatable
-- `project_root` must be empty OR contain only allowed pre-existing files (TBD)
-- must fail if `.cairn/manifest.yaml` already exists (idempotency safety)
+- `project_root` must be empty (no files or directories present)
+- Initialization MUST fail if `.cairn/manifest.yaml` already exists
 
 ## Failure Behavior
 If any write fails:
@@ -85,7 +85,6 @@ If any write fails:
 - File permissions: inherit OS defaults (tightening later)
 
 ## Open Questions
-- Allow initializing into non-empty directory? If yes, what is allowed?
 - Naming rules for `project_name` (length, characters)
 - Should `data/` exist by default?
 - Should we support a `cairn.yaml` at root instead of `.cairn/manifest.yaml`?
