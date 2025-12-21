@@ -2,3 +2,4 @@
 __pycache__/
 *.py[cod]
 core/*.egg-info/
+docs/specs/init.md
