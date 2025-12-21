@@ -15,3 +15,7 @@ Cairn is in early development. Interfaces, schemas, and security boundaries are 
 
 Cairn is an open project stewarded by its maintainers.  
 The name and direction of the project are guided by its design principles and security goals.
+
+## Specs
+- [Project initialization on-disk contract](docs/specs/project-init.md)
+
