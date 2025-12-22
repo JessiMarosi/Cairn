@@ -100,6 +100,12 @@ All Phase 3 errors propagate unchanged (do not wrap or remap).
 - `introspection_io_error`
 - `introspection_symlink_disallowed` (if applicable)
 
+### Error representation (MUST)
+- Introspection errors are raised as Python exceptions.
+- Each Phase 4 error exception MUST expose a stable `code: str` matching one of the Phase 4 error codes listed above.
+- Phase 3 errors MUST propagate unchanged (no wrapping, no remapping).
+- Exception messages are developer-facing and may change; tests MUST assert on `code` (and on exception type only if specified).
+
 ## Test Requirements
 Add `core/tests/test_project_introspect.py` with coverage for:
 - Happy path introspection returns stable, sorted results
