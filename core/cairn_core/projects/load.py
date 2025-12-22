@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+import yaml
+
 
 @dataclass(frozen=True, slots=True)
 class ProjectLoadError(Exception):
@@ -27,5 +29,15 @@ def load_project(root: Path):
             code="manifest_not_file",
             message="Project manifest path is not a file",
         )
+
+    try:
+        raw = manifest_path.read_text(encoding="utf-8")
+        _data = yaml.safe_load(raw)
+    except Exception as e:  # noqa: BLE001
+        raise ProjectLoadError(
+            code="manifest_invalid_yaml",
+            message="Project manifest is not valid YAML",
+            cause=e,
+        ) from e
 
     raise NotImplementedError
