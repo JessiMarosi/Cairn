@@ -27,11 +27,13 @@ class ProjectIntrospection:
     """
     Phase 4 result object.
 
-    NOTE: Fields will be filled in during Step 3+ as traversal is implemented.
-    Keep this dataclass minimal for now to avoid inventing fields not yet wired.
+    NOTE: Fields will be filled in during later steps as traversal is implemented.
+    Keep this dataclass minimal and only add fields that are validated by tests.
     """
 
     project: ProjectContext
+    entry_count: int
+    relative_paths: list[str]
 
 
 def _iter_tree_deterministic(root: Path, *, max_depth: int) -> list[Path]:
@@ -41,8 +43,7 @@ def _iter_tree_deterministic(root: Path, *, max_depth: int) -> list[Path]:
     - Stable lexicographic ordering within each directory.
     - Rejects symlinks immediately (fail-fast).
     - Enforces max_depth (root is depth 0).
-
-    NOTE: This helper is intentionally NOT wired into introspect_project() yet.
+    - Excludes __pycache__ directories and their contents.
     """
     if max_depth < 0:
         raise ValueError("max_depth must be >= 0")
@@ -50,6 +51,10 @@ def _iter_tree_deterministic(root: Path, *, max_depth: int) -> list[Path]:
     out: list[Path] = []
 
     def walk_dir(dir_path: Path, depth: int) -> None:
+        # Exclusion: ignore __pycache__ entirely (dir and contents).
+        if dir_path.name == "__pycache__":
+            return
+
         # Fail-fast on symlinks.
         if dir_path.is_symlink():
             raise ProjectIntrospectError(
@@ -63,30 +68,39 @@ def _iter_tree_deterministic(root: Path, *, max_depth: int) -> list[Path]:
         # root is depth 0; children are depth+1.
         # If we're already at max_depth, any child entry would exceed it.
         if depth >= max_depth:
+            # We only fail if there *exists* a child entry we would visit.
+            # (If directory is empty, there's nothing to exceed.)
             try:
-                next(dir_path.iterdir(), None)
+                # NOTE: Excluded children (like __pycache__) still "exist" on disk,
+                # but we still consider their presence as "a child exists".
+                has_child = any(dir_path.iterdir())
             except OSError as e:
                 raise ProjectIntrospectError(
                     code="introspect_io_error",
                     message=f"Failed to read directory: {dir_path} ({e})",
                 ) from e
 
-            raise ProjectIntrospectError(
-                code="introspection_scan_limit_exceeded",
-                message=f"Traversal depth limit exceeded at: {dir_path}",
-            )
+            if has_child:
+                raise ProjectIntrospectError(
+                    code="introspection_scan_limit_exceeded",
+                    message=f"Traversal depth limit exceeded at: {dir_path}",
+                )
+            return
 
         # Deterministic ordering: sort by name only (filesystem case preserved).
         try:
             children = sorted(dir_path.iterdir(), key=lambda p: p.name)
         except OSError as e:
-            # Placeholder for later: permissions / IO errors will become Phase 4 codes.
             raise ProjectIntrospectError(
                 code="introspect_io_error",
                 message=f"Failed to read directory: {dir_path} ({e})",
             ) from e
 
         for child in children:
+            # Exclusion: ignore __pycache__ entirely (dir and contents).
+            if child.name == "__pycache__":
+                continue
+
             # Reject symlinks at the entry point.
             if child.is_symlink():
                 raise ProjectIntrospectError(
@@ -107,11 +121,26 @@ _DEFAULT_MAX_DEPTH = 25  # Spec default: MAX_DEPTH = 25
 
 
 def introspect_project(root: Path) -> ProjectIntrospection:
-    # Phase 3 gate: MUST run first; errors propagate unchanged.
+    """
+    Phase 4:
+    - Phase 3 gate MUST run first; errors propagate unchanged.
+    - Must enforce traversal max depth, raising code 'introspection_scan_limit_exceeded'.
+    - For a valid project (within limits), must return ProjectIntrospection.
+    """
     project = load_project(root)
 
-    # Phase 4 traversal wiring (skeleton only). No accounting/exclusions yet.
-    _iter_tree_deterministic(root, max_depth=_DEFAULT_MAX_DEPTH)
+    entries = _iter_tree_deterministic(root, max_depth=_DEFAULT_MAX_DEPTH)
 
-    # Stub until traversal is fully implemented in later steps.
-    raise NotImplementedError
+    # Convert to relative POSIX paths and EXCLUDE the root entry "."
+    relative_paths: list[str] = []
+    for p in entries:
+        rp = p.relative_to(root).as_posix()
+        if rp == ".":
+            continue
+        relative_paths.append(rp)
+
+    return ProjectIntrospection(
+        project=project,
+        entry_count=len(entries),
+        relative_paths=relative_paths,
+    )
