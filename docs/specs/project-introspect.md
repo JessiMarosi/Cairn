@@ -61,6 +61,22 @@ Fields (v0):
 - `cairn_entries: tuple[str, ...]`      (sorted, relative names)
 - `ignored_paths: tuple[str, ...]`      (sorted, relative paths excluded)
 
+### Scan accounting semantics (MUST)
+- Definitions:
+  - A **directory** is any non-symlink filesystem entry for which `Path.is_dir()` is true.
+  - A **file** is any non-symlink filesystem entry for which `Path.is_file()` is true.
+  - Symlinks are never counted (traversal fails on encounter per spec).
+- Counting rules:
+  - `dir_count` includes the project `root` directory itself (depth 0).
+  - `file_count` counts all visited files under `root`, including files within `.cairn/` (unless excluded).
+  - Excluded directories and their contents MUST NOT be visited and MUST NOT contribute to `file_count`, `dir_count`, or `total_size_bytes`.
+- Size rules:
+  - `total_size_bytes` is the sum of `st_size` for each counted file.
+  - Directories do not contribute to `total_size_bytes`.
+- Failure behavior:
+  - If a permission or I/O error occurs on any visited entry, introspection MUST fail immediately.
+  - On failure, no partial counts are returned (exception raised).
+
 ## Determinism Rules (MUST)
 - No reliance on OS directory enumeration order
 - All lists/tuples must be sorted lexicographically
