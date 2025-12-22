@@ -40,4 +40,14 @@ def load_project(root: Path):
             cause=e,
         ) from e
 
+    if not isinstance(_data, dict):
+        raise NotImplementedError
+
+    schema_version = _data.get("schema_version")
+    if schema_version != "0.1":
+        raise ProjectLoadError(
+            code="manifest_schema_unsupported",
+            message="Unsupported manifest schema_version",
+        )
+
     raise NotImplementedError
