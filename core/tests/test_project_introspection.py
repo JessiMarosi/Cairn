@@ -162,3 +162,24 @@ def test_introspect_excludes_dunder_pycache(tmp_path):
 
     assert "__pycache__" not in result.relative_paths
     assert "__pycache__/junk.pyc" not in result.relative_paths
+
+
+def test_introspect_excludes_dot_git(tmp_path):
+    """
+    Step 19: Introspection must exclude .git directories and their contents.
+    """
+    from cairn_core.projects.init import init_project
+
+    init_project(tmp_path, "test-project")
+
+    git_dir = tmp_path / ".git"
+    git_dir.mkdir()
+    (git_dir / "config").write_text(
+        "[core]\n\trepositoryformatversion = 0\n",
+        encoding="utf-8",
+    )
+
+    result = introspect_project(tmp_path)
+
+    assert ".git" not in result.relative_paths
+    assert ".git/config" not in result.relative_paths

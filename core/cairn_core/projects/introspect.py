@@ -36,6 +36,9 @@ class ProjectIntrospection:
     relative_paths: list[str]
 
 
+_EXCLUDED_DIR_NAMES = {"__pycache__", ".git"}
+
+
 def _iter_tree_deterministic(root: Path, *, max_depth: int) -> list[Path]:
     """
     Deterministic directory traversal (foundation for Phase 4).
@@ -43,7 +46,7 @@ def _iter_tree_deterministic(root: Path, *, max_depth: int) -> list[Path]:
     - Stable lexicographic ordering within each directory.
     - Rejects symlinks immediately (fail-fast).
     - Enforces max_depth (root is depth 0).
-    - Excludes __pycache__ directories and their contents.
+    - Excludes internal directories (__pycache__, .git) and their contents.
     """
     if max_depth < 0:
         raise ValueError("max_depth must be >= 0")
@@ -51,8 +54,8 @@ def _iter_tree_deterministic(root: Path, *, max_depth: int) -> list[Path]:
     out: list[Path] = []
 
     def walk_dir(dir_path: Path, depth: int) -> None:
-        # Exclusion: ignore __pycache__ entirely (dir and contents).
-        if dir_path.name == "__pycache__":
+        # Exclusion: ignore internal directories entirely (dir + contents).
+        if dir_path.name in _EXCLUDED_DIR_NAMES:
             return
 
         # Fail-fast on symlinks.
@@ -65,14 +68,8 @@ def _iter_tree_deterministic(root: Path, *, max_depth: int) -> list[Path]:
         out.append(dir_path)
 
         # Spec: if visiting an entry would exceed MAX_DEPTH, we MUST fail.
-        # root is depth 0; children are depth+1.
-        # If we're already at max_depth, any child entry would exceed it.
         if depth >= max_depth:
-            # We only fail if there *exists* a child entry we would visit.
-            # (If directory is empty, there's nothing to exceed.)
             try:
-                # NOTE: Excluded children (like __pycache__) still "exist" on disk,
-                # but we still consider their presence as "a child exists".
                 has_child = any(dir_path.iterdir())
             except OSError as e:
                 raise ProjectIntrospectError(
@@ -97,8 +94,8 @@ def _iter_tree_deterministic(root: Path, *, max_depth: int) -> list[Path]:
             ) from e
 
         for child in children:
-            # Exclusion: ignore __pycache__ entirely (dir and contents).
-            if child.name == "__pycache__":
+            # Exclusion: ignore internal directories entirely (dir + contents).
+            if child.name in _EXCLUDED_DIR_NAMES:
                 continue
 
             # Reject symlinks at the entry point.
