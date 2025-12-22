@@ -5,6 +5,8 @@ from pathlib import Path
 
 import yaml
 
+from cairn_core.projects.context import ProjectContext
+
 
 @dataclass(frozen=True, slots=True)
 class ProjectLoadError(Exception):
@@ -16,7 +18,7 @@ class ProjectLoadError(Exception):
         return self.message
 
 
-def load_project(root: Path):
+def load_project(root: Path) -> ProjectContext:
     manifest_path = root / ".cairn" / "manifest.yaml"
 
     if not manifest_path.exists():
@@ -58,11 +60,16 @@ def load_project(root: Path):
             message="Missing required manifest field: project_id",
         )
 
-    # Step 31: Invalid field (project_id must be a string)
+    # Invalid field (project_id must be a string)
     if not isinstance(_data.get("project_id"), str):
         raise ProjectLoadError(
             code="manifest_invalid_field",
             message="Invalid manifest field: project_id",
         )
 
-    raise NotImplementedError
+    return ProjectContext(
+        root=root,
+        manifest_path=manifest_path,
+        project_id=_data["project_id"],
+        schema_version=_data["schema_version"],
+    )
