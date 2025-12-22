@@ -18,6 +18,7 @@ class ProjectLoadError(Exception):
 
 def load_project(root: Path):
     manifest_path = root / ".cairn" / "manifest.yaml"
+
     if not manifest_path.exists():
         raise ProjectLoadError(
             code="manifest_missing",
@@ -49,11 +50,19 @@ def load_project(root: Path):
             code="manifest_schema_unsupported",
             message="Unsupported manifest schema_version",
         )
-    
+
+    # Missing required field check (must happen before type validation)
     if _data.get("project_id") is None:
         raise ProjectLoadError(
             code="manifest_missing_field",
             message="Missing required manifest field: project_id",
+        )
+
+    # Step 31: Invalid field (project_id must be a string)
+    if not isinstance(_data.get("project_id"), str):
+        raise ProjectLoadError(
+            code="manifest_invalid_field",
+            message="Invalid manifest field: project_id",
         )
 
     raise NotImplementedError
