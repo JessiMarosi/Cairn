@@ -49,5 +49,11 @@ def load_project(root: Path):
             code="manifest_schema_unsupported",
             message="Unsupported manifest schema_version",
         )
+    
+    if _data.get("project_id") is None:
+        raise ProjectLoadError(
+            code="manifest_missing_field",
+            message="Missing required manifest field: project_id",
+        )
 
     raise NotImplementedError

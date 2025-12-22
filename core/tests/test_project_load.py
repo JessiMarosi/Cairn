@@ -49,3 +49,18 @@ def test_load_project_manifest_schema_unsupported(tmp_path: Path) -> None:
         load_project(tmp_path)
 
     assert excinfo.value.code == "manifest_schema_unsupported"
+
+
+def test_load_project_manifest_missing_field(tmp_path: Path) -> None:
+    cairn_dir = tmp_path / ".cairn"
+    cairn_dir.mkdir()
+    manifest_path = cairn_dir / "manifest.yaml"
+    manifest_path.write_text(
+        "schema_version: '0.1'\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ProjectLoadError) as excinfo:
+        load_project(tmp_path)
+
+    assert excinfo.value.code == "manifest_missing_field"
