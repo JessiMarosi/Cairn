@@ -31,8 +31,9 @@ Define a read-only, deterministic introspection pass over an existing Cairn proj
 
 ## Public API
 
-### Function
-- `introspect_project(root: Path) -> ProjectIntrospection`
+### Module + Function (public)
+- Module: `core/cairn_core/projects/introspect.py`
+- Function: `introspect_project(root: Path) -> ProjectIntrospection`
 
 ### Behavior overview
 1. Call `load_project(root)` and obtain `ProjectContext`
