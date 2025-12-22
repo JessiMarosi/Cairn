@@ -90,7 +90,7 @@ def _iter_tree_deterministic(root: Path, *, max_depth: int) -> list[Path]:
     return out
 
 
-_DEFAULT_MAX_DEPTH = 0  # Placeholder wiring value; will be set to the spec default later.
+_DEFAULT_MAX_DEPTH = 25  # Spec default: MAX_DEPTH = 25
 
 
 def introspect_project(root: Path) -> ProjectIntrospection:
