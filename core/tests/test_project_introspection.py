@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from cairn_core.projects.introspect import introspect_project
+from cairn_core.projects.introspect import ProjectIntrospection, introspect_project
 
 
 def test_introspect_propagates_phase3_errors(tmp_path):
@@ -29,6 +29,13 @@ def test_introspect_stub_raises_not_implemented_on_valid_project(tmp_path):
 
     # Phase 2 init signature is: (path, name, *, force=False)
     init_project(tmp_path, "test-project")
+
+    # Contract check: public API returns ProjectIntrospection (even though stub raises for now).
+    # With `from __future__ import annotations`, this may be stored as a string.
+    assert introspect_project.__annotations__.get("return") in (
+        "ProjectIntrospection",
+        ProjectIntrospection,
+    )
 
     with pytest.raises(NotImplementedError):
         introspect_project(tmp_path)

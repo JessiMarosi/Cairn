@@ -1,18 +1,42 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
+from cairn_core.projects.context import ProjectContext
 from cairn_core.projects.load import load_project
 
 
-def introspect_project(root: Path):
+class ProjectIntrospectError(Exception):
     """
-    Phase 4 public API.
+    Phase 4 error base class.
 
-    This stub intentionally enforces the Phase 3 gate (load_project) and
-    defers introspection implementation until subsequent steps.
+    All Phase 4 introspection-specific errors MUST derive from this type and expose a
+    stable string code via .code. Phase 3 load errors must propagate unchanged.
     """
-    # Phase 3 is the authoritative gate; propagate its errors unchanged.
-    load_project(root)
 
-    raise NotImplementedError("Phase 4 introspection is not implemented yet.")
+    code: str
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+
+
+@dataclass(frozen=True, slots=True)
+class ProjectIntrospection:
+    """
+    Phase 4 result object.
+
+    NOTE: Fields will be filled in during Step 3+ as traversal is implemented.
+    Keep this dataclass minimal for now to avoid inventing fields not yet wired.
+    """
+
+    project: ProjectContext
+
+
+def introspect_project(root: Path) -> ProjectIntrospection:
+    # Phase 3 gate: MUST run first; errors propagate unchanged.
+    project = load_project(root)
+
+    # Stub until traversal is implemented in later steps.
+    raise NotImplementedError
