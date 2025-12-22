@@ -59,9 +59,22 @@ def _iter_tree_deterministic(root: Path, *, max_depth: int) -> list[Path]:
 
         out.append(dir_path)
 
-        # Stop descending if we've reached the max depth.
+        # Spec: if visiting an entry would exceed MAX_DEPTH, we MUST fail.
+        # root is depth 0; children are depth+1.
+        # If we're already at max_depth, any child entry would exceed it.
         if depth >= max_depth:
-            return
+            try:
+                next(dir_path.iterdir(), None)
+            except OSError as e:
+                raise ProjectIntrospectError(
+                    code="introspect_io_error",
+                    message=f"Failed to read directory: {dir_path} ({e})",
+                ) from e
+
+            raise ProjectIntrospectError(
+                code="introspection_scan_limit_exceeded",
+                message=f"Traversal depth limit exceeded at: {dir_path}",
+            )
 
         # Deterministic ordering: sort by name only (filesystem case preserved).
         try:
