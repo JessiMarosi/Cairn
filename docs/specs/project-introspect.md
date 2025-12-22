@@ -85,6 +85,18 @@ Fields (v0):
 - Do not use current time
 - No nondeterministic data sources
 
+## Path ordering & normalization (MUST)
+- All paths exposed in introspection outputs MUST be:
+  - Relative to the project `root`
+  - Normalized to use forward slashes (`/`) as separators
+- Ordering:
+  - All path lists and entry tuples MUST be sorted lexicographically by their normalized string form.
+- Case handling:
+  - Path case MUST be preserved exactly as reported by the filesystem.
+  - No case folding or normalization is performed, even on case-insensitive filesystems.
+- Stability guarantee:
+  - Given the same on-disk project state, introspection output MUST be byte-for-byte identical across runs on the same platform.
+
 ## Safety Rules (MUST)
 - Do not follow symlinks (v0 default), or define exact symlink policy here
 - Never read file contents (metadata only)
@@ -103,8 +115,6 @@ Fields (v0):
   - Exclusions apply to directory names anywhere in the tree.
   - If a directory is excluded, it (and all descendants) MUST NOT be visited or counted.
   - Excluded paths MUST be recorded in `ignored_paths` as normalized relative paths.
-- Normalization:
-  - All recorded paths in outputs MUST be relative to `root` and use forward slashes (`/`) as separators.
 
 ## Exclusion Rules (v0)
 Exclude these directories anywhere they appear:
