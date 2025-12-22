@@ -34,9 +34,71 @@ class ProjectIntrospection:
     project: ProjectContext
 
 
+def _iter_tree_deterministic(root: Path, *, max_depth: int) -> list[Path]:
+    """
+    Deterministic directory traversal (foundation for Phase 4).
+
+    - Stable lexicographic ordering within each directory.
+    - Rejects symlinks immediately (fail-fast).
+    - Enforces max_depth (root is depth 0).
+
+    NOTE: This helper is intentionally NOT wired into introspect_project() yet.
+    """
+    if max_depth < 0:
+        raise ValueError("max_depth must be >= 0")
+
+    out: list[Path] = []
+
+    def walk_dir(dir_path: Path, depth: int) -> None:
+        # Fail-fast on symlinks.
+        if dir_path.is_symlink():
+            raise ProjectIntrospectError(
+                code="introspect_symlink_detected",
+                message=f"Symlink encountered: {dir_path}",
+            )
+
+        out.append(dir_path)
+
+        # Stop descending if we've reached the max depth.
+        if depth >= max_depth:
+            return
+
+        # Deterministic ordering: sort by name only (filesystem case preserved).
+        try:
+            children = sorted(dir_path.iterdir(), key=lambda p: p.name)
+        except OSError as e:
+            # Placeholder for later: permissions / IO errors will become Phase 4 codes.
+            raise ProjectIntrospectError(
+                code="introspect_io_error",
+                message=f"Failed to read directory: {dir_path} ({e})",
+            ) from e
+
+        for child in children:
+            # Reject symlinks at the entry point.
+            if child.is_symlink():
+                raise ProjectIntrospectError(
+                    code="introspect_symlink_detected",
+                    message=f"Symlink encountered: {child}",
+                )
+
+            if child.is_dir():
+                walk_dir(child, depth + 1)
+            else:
+                out.append(child)
+
+    walk_dir(root, 0)
+    return out
+
+
+_DEFAULT_MAX_DEPTH = 0  # Placeholder wiring value; will be set to the spec default later.
+
+
 def introspect_project(root: Path) -> ProjectIntrospection:
     # Phase 3 gate: MUST run first; errors propagate unchanged.
     project = load_project(root)
 
-    # Stub until traversal is implemented in later steps.
+    # Phase 4 traversal wiring (skeleton only). No accounting/exclusions yet.
+    _iter_tree_deterministic(root, max_depth=_DEFAULT_MAX_DEPTH)
+
+    # Stub until traversal is fully implemented in later steps.
     raise NotImplementedError
