@@ -74,6 +74,22 @@ Fields (v0):
 - Never read file contents (metadata only)
 - Never traverse outside `root` (no `..` escapes; resolve and enforce)
 
+### Filesystem traversal rules (MUST)
+- Traversal is rooted at `root` and MUST NOT access paths outside `root` (even via symlinks).
+- Symlinks:
+  - Introspection MUST NOT follow symlinks (neither to files nor directories).
+  - If a symlink is encountered during traversal, introspection MUST raise `introspection_symlink_disallowed`.
+- Depth counting:
+  - `root` is depth `0`.
+  - An entry directly under `root/` is depth `1`.
+  - If visiting an entry would exceed `MAX_DEPTH`, introspection MUST fail with `introspection_scan_limit_exceeded`.
+- Exclusion application:
+  - Exclusions apply to directory names anywhere in the tree.
+  - If a directory is excluded, it (and all descendants) MUST NOT be visited or counted.
+  - Excluded paths MUST be recorded in `ignored_paths` as normalized relative paths.
+- Normalization:
+  - All recorded paths in outputs MUST be relative to `root` and use forward slashes (`/`) as separators.
+
 ## Exclusion Rules (v0)
 Exclude these directories anywhere they appear:
 - `.git/`
