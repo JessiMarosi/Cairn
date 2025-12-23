@@ -136,3 +136,34 @@ def test_analyze_max_depth(tmp_path: Path) -> None:
     analysis = analyze_project(tmp_path)
 
     assert analysis.max_depth == 3
+
+
+def test_analyze_markers_readme_pyproject_requirements(tmp_path: Path) -> None:
+    """
+    Phase 5 Step 35:
+    markers must detect common project files deterministically.
+
+    Rules:
+    - has_readme: True if a README.* exists at project root (case-insensitive name "readme")
+    - has_pyproject: True if pyproject.toml exists at project root
+    - has_requirements: True if requirements.txt exists at project root
+    - Ignore anything under .cairn/
+    """
+    from cairn_core.projects.init import init_project
+
+    init_project(tmp_path, "test-project")
+
+    # Create markers at root
+    (tmp_path / "README.md").write_text("x", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text("x", encoding="utf-8")
+    (tmp_path / "requirements.txt").write_text("x", encoding="utf-8")
+
+    # Should NOT be counted (internal metadata)
+    (tmp_path / ".cairn").mkdir(exist_ok=True)
+    (tmp_path / ".cairn" / "README.md").write_text("x", encoding="utf-8")
+
+    analysis = analyze_project(tmp_path)
+
+    assert analysis.markers.has_readme is True
+    assert analysis.markers.has_pyproject is True
+    assert analysis.markers.has_requirements is True
