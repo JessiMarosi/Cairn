@@ -71,10 +71,37 @@ def analyze_project(root: Path) -> ProjectAnalysis:
         if depth > max_depth:
             max_depth = depth
 
+    # ---- markers ----
+    has_readme = False
+    has_pyproject = False
+    has_requirements = False
+
+    for rel in relative_paths:
+        rel_norm = rel.replace("\\", "/")
+
+        # Ignore internal metadata
+        if rel_norm == ".cairn" or rel_norm.startswith(".cairn/"):
+            continue
+
+        # Only root-level files count for markers
+        if "/" in rel_norm:
+            continue
+
+        name = rel_norm.lower()
+
+        if name == "pyproject.toml":
+            has_pyproject = True
+        elif name == "requirements.txt":
+            has_requirements = True
+        else:
+            # README.* at root (case-insensitive)
+            if name.startswith("readme") and (len(name) == 6 or name[6] == "."):
+                has_readme = True
+
     markers = AnalysisMarkers(
-        has_readme=False,
-        has_pyproject=False,
-        has_requirements=False,
+        has_readme=has_readme,
+        has_pyproject=has_pyproject,
+        has_requirements=has_requirements,
     )
 
     return ProjectAnalysis(
