@@ -58,3 +58,45 @@ def test_analyze_extension_counts(tmp_path: Path) -> None:
     assert analysis.extension_counts[".py"] == 1
     assert analysis.extension_counts[".gz"] == 1
     assert analysis.extension_counts[""] == 1
+
+
+def test_analyze_dir_counts_by_top_level_dir(tmp_path: Path) -> None:
+    """
+    Phase 5 Step 31:
+    dir_counts counts FILES grouped by top-level directory.
+
+    Rules:
+    - Root files count under "".
+    - Nested files count under their first path segment.
+    - Deterministic (same result each run).
+    """
+    from cairn_core.projects.init import init_project
+
+    init_project(tmp_path, "test-project")
+
+    # Root files
+    (tmp_path / "root1.txt").write_text("x", encoding="utf-8")
+    (tmp_path / "root2").write_text("x", encoding="utf-8")
+
+    # Nested files
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "a.md").write_text("x", encoding="utf-8")
+    (tmp_path / "docs" / "sub").mkdir()
+    (tmp_path / "docs" / "sub" / "b.md").write_text("x", encoding="utf-8")
+
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "main.py").write_text("x", encoding="utf-8")
+    (tmp_path / "src" / "pkg").mkdir()
+    (tmp_path / "src" / "pkg" / "mod.py").write_text("x", encoding="utf-8")
+
+    analysis1 = analyze_project(tmp_path)
+    analysis2 = analyze_project(tmp_path)
+
+    expected = {
+        "": 2,      # root1.txt, root2
+        "docs": 2,  # docs/a.md, docs/sub/b.md
+        "src": 2,   # src/main.py, src/pkg/mod.py
+    }
+
+    assert analysis1.dir_counts == expected
+    assert analysis2.dir_counts == expected
