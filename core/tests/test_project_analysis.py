@@ -100,3 +100,39 @@ def test_analyze_dir_counts_by_top_level_dir(tmp_path: Path) -> None:
 
     assert analysis1.dir_counts == expected
     assert analysis2.dir_counts == expected
+
+
+def test_analyze_max_depth(tmp_path: Path) -> None:
+    """
+    Phase 5 Step 33:
+    max_depth reports the maximum directory depth of any FILE.
+
+    Rules:
+    - Root files have depth 0
+    - Each directory level adds +1
+    - .cairn paths are ignored
+    """
+    from cairn_core.projects.init import init_project
+
+    init_project(tmp_path, "test-project")
+
+    # Root file (depth 0)
+    (tmp_path / "root.txt").write_text("x", encoding="utf-8")
+
+    # Depth 1
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "a.md").write_text("x", encoding="utf-8")
+
+    # Depth 2
+    (tmp_path / "docs" / "sub").mkdir()
+    (tmp_path / "docs" / "sub" / "b.md").write_text("x", encoding="utf-8")
+
+    # Depth 3
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "pkg").mkdir()
+    (tmp_path / "src" / "pkg" / "core").mkdir()
+    (tmp_path / "src" / "pkg" / "core" / "x.py").write_text("x", encoding="utf-8")
+
+    analysis = analyze_project(tmp_path)
+
+    assert analysis.max_depth == 3
