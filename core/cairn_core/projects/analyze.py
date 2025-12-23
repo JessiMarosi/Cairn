@@ -22,6 +22,7 @@ def analyze_project(root: Path) -> ProjectAnalysis:
 
     relative_paths = tuple(intro.relative_paths)
 
+    # ---- extension_counts ----
     ext_counter: Counter[str] = Counter()
     for rel in relative_paths:
         full_path = root / Path(rel)
@@ -31,14 +32,21 @@ def analyze_project(root: Path) -> ProjectAnalysis:
         suffix = Path(rel).suffix.lower()
         ext_counter[suffix] += 1
 
+    # ---- dir_counts ----
     dir_counter: Counter[str] = Counter()
     for rel in relative_paths:
         full_path = root / Path(rel)
         if not full_path.is_file():
             continue
 
-        # Group files by top-level directory; root files count under ""
+        # Normalize for Windows paths
         rel_norm = rel.replace("\\", "/")
+
+        # Exclude Cairn internal metadata
+        if rel_norm.startswith(".cairn/"):
+            continue
+
+        # Group files by top-level directory; root files count under ""
         head, sep, _tail = rel_norm.partition("/")
         top = "" if sep == "" else head
         dir_counter[top] += 1
