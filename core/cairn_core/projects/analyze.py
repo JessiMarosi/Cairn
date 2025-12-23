@@ -6,6 +6,8 @@ from pathlib import Path
 from cairn_core.projects.analysis import AnalysisMarkers, ProjectAnalysis
 from cairn_core.projects.introspect import introspect_project
 from cairn_core.projects.load import load_project
+from cairn_core.reporting.build import build_report_from_analysis
+from cairn_core.reporting.schema import CairnReport
 
 
 def analyze_project(root: Path) -> ProjectAnalysis:
@@ -114,3 +116,16 @@ def analyze_project(root: Path) -> ProjectAnalysis:
         max_depth=max_depth,
         markers=markers,
     )
+
+
+def analyze_project_report(root: Path) -> CairnReport:
+    """
+    Phase 6 Step 5 integration entrypoint.
+
+    Must:
+    - enforce Phase 3 + Phase 4 gates via analyze_project
+    - be deterministic and side-effect free
+    - return CairnReport
+    """
+    analysis = analyze_project(root)
+    return build_report_from_analysis(analysis)
