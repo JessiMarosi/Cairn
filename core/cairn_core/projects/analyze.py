@@ -51,6 +51,26 @@ def analyze_project(root: Path) -> ProjectAnalysis:
         top = "" if sep == "" else head
         dir_counter[top] += 1
 
+    # ---- max_depth ----
+    max_depth = 0
+    for rel in relative_paths:
+        full_path = root / Path(rel)
+        if not full_path.is_file():
+            continue
+
+        # Normalize for Windows paths
+        rel_norm = rel.replace("\\", "/")
+
+        # Exclude Cairn internal metadata
+        if rel_norm.startswith(".cairn/"):
+            continue
+
+        # Depth = number of directories in the relative path
+        parts = rel_norm.split("/")
+        depth = len(parts) - 1  # root file => 0
+        if depth > max_depth:
+            max_depth = depth
+
     markers = AnalysisMarkers(
         has_readme=False,
         has_pyproject=False,
@@ -64,6 +84,6 @@ def analyze_project(root: Path) -> ProjectAnalysis:
         relative_paths=relative_paths,
         extension_counts=dict(ext_counter),
         dir_counts=dict(dir_counter),
-        max_depth=0,
+        max_depth=max_depth,
         markers=markers,
     )
